@@ -66,6 +66,26 @@
   animation: slideDown 0.2s ease;
 }
 
+.menu-header {
+  padding: 1rem 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+}
+
+.menu-logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.menu-tagline {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -122,6 +142,14 @@
 }
 
 .menu-item.logout:hover {
+  background-color: #fff5f5;
+}
+
+.menu-item.delete {
+  color: #c74040;
+}
+
+.menu-item.delete:hover {
   background-color: #fff5f5;
 }
 
@@ -267,6 +295,69 @@
   font-size: 0.9rem;
   color: var(--text-tertiary);
   font-style: italic;
+}
+
+.settings-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.theme-option {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.theme-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-option.active {
+  border-width: 3px;
+  font-weight: 600;
+}
+
+.text-formatting-toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.formatting-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.color-picker {
+  width: 40px;
+  height: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.font-size-select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 /* Mode Container */

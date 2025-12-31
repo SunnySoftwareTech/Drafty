@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
+import { Dashboard } from './Dashboard'
+import { themes, applyTheme, getThemeNames } from './themes'
 import './App.css'
 
 interface Note {
@@ -13,6 +15,9 @@ interface Note {
 
 type Mode = 'dashboard' | 'notebook' | 'flashcards' | 'whiteboard' | 'study'
 
+const DEFAULT_TEXT_COLOR = '#cdd6f4'
+const DEFAULT_FONT_SIZE = '16'
+
 function App() {
   const { user, logout } = useAuth()
   const [notes, setNotes] = useState<Note[]>([])
@@ -20,6 +25,9 @@ function App() {
   const [currentMode, setCurrentMode] = useState<Mode>('dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [currentTheme, setCurrentTheme] = useState('mocha')
+  const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR)
+  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
 
   // Load notes from localStorage when user changes
   useEffect(() => {
@@ -45,6 +53,35 @@ function App() {
       setSelectedNoteId(null)
     }
   }, [user])
+
+  // Load and apply theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('drafty-theme') || 'mocha'
+    setCurrentTheme(savedTheme)
+    applyTheme(savedTheme)
+    
+    // Load text formatting preferences
+    const savedTextColor = localStorage.getItem('drafty-text-color') || DEFAULT_TEXT_COLOR
+    const savedFontSize = localStorage.getItem('drafty-font-size') || DEFAULT_FONT_SIZE
+    setTextColor(savedTextColor)
+    setFontSize(savedFontSize)
+  }, [])
+
+  const handleThemeChange = (theme: string) => {
+    setCurrentTheme(theme)
+    applyTheme(theme)
+    localStorage.setItem('drafty-theme', theme)
+  }
+
+  const handleTextColorChange = (color: string) => {
+    setTextColor(color)
+    localStorage.setItem('drafty-text-color', color)
+  }
+
+  const handleFontSizeChange = (size: string) => {
+    setFontSize(size)
+    localStorage.setItem('drafty-font-size', size)
+  }
 
   // Save notes to localStorage whenever they change (user-specific)
   useEffect(() => {
@@ -145,6 +182,10 @@ function App() {
   }
 
   const renderDashboard = () => (
+    <Dashboard onModeSelect={(mode) => handleModeChange(mode as Mode)} />
+  )
+
+  const renderNotebook = () => (
     <>
       <aside className="sidebar">
         <div className="sidebar-header">
@@ -182,9 +223,32 @@ function App() {
             <div className="editor-header">
               <div>{formatDate(selectedNote.updatedAt)}</div>
               <div className="editor-actions">
-                <button onClick={() => deleteNote(selectedNote.id)} className="delete-btn">
-                  🗑️ Delete
-                </button>
+                <div className="text-formatting-toolbar">
+                  <label className="formatting-label">
+                    Color:
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => handleTextColorChange(e.target.value)}
+                      className="color-picker"
+                    />
+                  </label>
+                  <label className="formatting-label">
+                    Font Size:
+                    <select
+                      value={fontSize}
+                      onChange={(e) => handleFontSizeChange(e.target.value)}
+                      className="font-size-select"
+                    >
+                      <option value="12">12px</option>
+                      <option value="14">14px</option>
+                      <option value="16">16px</option>
+                      <option value="18">18px</option>
+                      <option value="20">20px</option>
+                      <option value="24">24px</option>
+                    </select>
+                  </label>
+                </div>
               </div>
             </div>
             <div className="editor-content">
@@ -200,6 +264,7 @@ function App() {
                 value={selectedNote.content}
                 onChange={(e) => updateNote(selectedNote.id, { content: e.target.value })}
                 placeholder="Start writing your note..."
+                style={{ color: textColor, fontSize: `${fontSize}px` }}
               />
             </div>
           </>
@@ -212,20 +277,6 @@ function App() {
         )}
       </main>
     </>
-  )
-
-  const renderNotebook = () => (
-    <div className="mode-container">
-      <div className="mode-content">
-        <div className="mode-header">
-          <h2>📓 Notebook Mode</h2>
-          <p>Organize your notes in a traditional notebook format</p>
-        </div>
-        <div className="mode-body">
-          <p>Coming soon: Enhanced notebook view with sections and chapters</p>
-        </div>
-      </div>
-    </div>
   )
 
   const renderFlashcards = () => (
@@ -288,6 +339,11 @@ function App() {
         <>
           <div className="menu-overlay" onClick={() => setMenuOpen(false)} />
           <div className="dropdown-menu">
+            <div className="menu-header">
+              <h2 className="menu-logo">Drafty</h2>
+              <p className="menu-tagline">Your thoughts, organized</p>
+            </div>
+            <div className="menu-divider" />
             <div className="menu-section">
               <div className="menu-section-title">Modes</div>
               <button 
@@ -326,6 +382,23 @@ function App() {
                 Study and Revise
               </button>
             </div>
+            {selectedNote && currentMode === 'notebook' && (
+              <>
+                <div className="menu-divider" />
+                <div className="menu-section">
+                  <button 
+                    className="menu-item delete" 
+                    onClick={() => {
+                      deleteNote(selectedNote.id)
+                      setMenuOpen(false)
+                    }}
+                  >
+                    <span className="menu-icon">🗑️</span>
+                    Delete Note
+                  </button>
+                </div>
+              </>
+            )}
             <div className="menu-divider" />
             <div className="menu-section">
               <button className="menu-item" onClick={handleSettings}>
@@ -359,8 +432,24 @@ function App() {
                 </div>
               </div>
               <div className="settings-section">
-                <h3>Preferences</h3>
-                <p className="settings-note">More settings coming soon...</p>
+                <h3>Theme</h3>
+                <p className="settings-description">Choose from 6 Catppuccin color themes</p>
+                <div className="theme-grid">
+                  {getThemeNames().map((themeName) => (
+                    <button
+                      key={themeName}
+                      className={`theme-option ${currentTheme === themeName ? 'active' : ''}`}
+                      onClick={() => handleThemeChange(themeName)}
+                      style={{
+                        backgroundColor: themes[themeName].colors.base,
+                        color: themes[themeName].colors.text,
+                        borderColor: currentTheme === themeName ? themes[themeName].colors.accent : 'transparent'
+                      }}
+                    >
+                      {themes[themeName].name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
