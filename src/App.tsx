@@ -11,10 +11,15 @@ interface Note {
   updatedAt: string
 }
 
+type Mode = 'dashboard' | 'notebook' | 'flashcards' | 'whiteboard' | 'study'
+
 function App() {
   const { user, logout } = useAuth()
   const [notes, setNotes] = useState<Note[]>([])
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
+  const [currentMode, setCurrentMode] = useState<Mode>('dashboard')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Load notes from localStorage when user changes
   useEffect(() => {
@@ -102,8 +107,45 @@ function App() {
     }
   }
 
-  return (
-    <div className="app">
+  const handleModeChange = (mode: Mode) => {
+    setCurrentMode(mode)
+    setMenuOpen(false)
+  }
+
+  const handleSettings = () => {
+    setSettingsOpen(true)
+    setMenuOpen(false)
+  }
+
+  const handleLogout = async () => {
+    setMenuOpen(false)
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Still close menu even if logout fails
+    }
+  }
+
+  const renderModeContent = () => {
+    switch (currentMode) {
+      case 'dashboard':
+        return renderDashboard()
+      case 'notebook':
+        return renderNotebook()
+      case 'flashcards':
+        return renderFlashcards()
+      case 'whiteboard':
+        return renderWhiteboard()
+      case 'study':
+        return renderStudy()
+      default:
+        return renderDashboard()
+    }
+  }
+
+  const renderDashboard = () => (
+    <>
       <aside className="sidebar">
         <div className="sidebar-header">
           <h1>Drafty</h1>
@@ -131,9 +173,6 @@ function App() {
           <div className="user-info">
             <span className="user-email">{user?.email}</span>
           </div>
-          <button className="logout-btn" onClick={logout}>
-            🚪 Sign Out
-          </button>
         </div>
       </aside>
 
@@ -172,6 +211,164 @@ function App() {
           </div>
         )}
       </main>
+    </>
+  )
+
+  const renderNotebook = () => (
+    <div className="mode-container">
+      <div className="mode-content">
+        <div className="mode-header">
+          <h2>📓 Notebook Mode</h2>
+          <p>Organize your notes in a traditional notebook format</p>
+        </div>
+        <div className="mode-body">
+          <p>Coming soon: Enhanced notebook view with sections and chapters</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderFlashcards = () => (
+    <div className="mode-container">
+      <div className="mode-content">
+        <div className="mode-header">
+          <h2>🎴 Flashcards Mode</h2>
+          <p>Create and study with flashcards</p>
+        </div>
+        <div className="mode-body">
+          <p>Coming soon: Interactive flashcards for effective learning</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderWhiteboard = () => (
+    <div className="mode-container">
+      <div className="mode-content">
+        <div className="mode-header">
+          <h2>🎨 Whiteboard Mode</h2>
+          <p>Freeform canvas like Apple Freeform</p>
+        </div>
+        <div className="mode-body">
+          <p>Coming soon: Draw, sketch, and brainstorm on an infinite canvas</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderStudy = () => (
+    <div className="mode-container">
+      <div className="mode-content">
+        <div className="mode-header">
+          <h2>📚 Study and Revise</h2>
+          <p>Review and test your knowledge</p>
+        </div>
+        <div className="mode-body">
+          <p>Coming soon: Spaced repetition and active recall tools</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="app">
+      {/* Burger Menu */}
+      <button 
+        className="burger-menu-btn" 
+        onClick={() => setMenuOpen(!menuOpen)}
+        aria-label="Menu"
+      >
+        <span className="burger-line"></span>
+        <span className="burger-line"></span>
+        <span className="burger-line"></span>
+      </button>
+
+      {/* Dropdown Menu */}
+      {menuOpen && (
+        <>
+          <div className="menu-overlay" onClick={() => setMenuOpen(false)} />
+          <div className="dropdown-menu">
+            <div className="menu-section">
+              <div className="menu-section-title">Modes</div>
+              <button 
+                className={`menu-item ${currentMode === 'dashboard' ? 'active' : ''}`}
+                onClick={() => handleModeChange('dashboard')}
+              >
+                <span className="menu-icon">📊</span>
+                Dashboard
+              </button>
+              <button 
+                className={`menu-item ${currentMode === 'notebook' ? 'active' : ''}`}
+                onClick={() => handleModeChange('notebook')}
+              >
+                <span className="menu-icon">📓</span>
+                Notebook
+              </button>
+              <button 
+                className={`menu-item ${currentMode === 'flashcards' ? 'active' : ''}`}
+                onClick={() => handleModeChange('flashcards')}
+              >
+                <span className="menu-icon">🎴</span>
+                Flashcards
+              </button>
+              <button 
+                className={`menu-item ${currentMode === 'whiteboard' ? 'active' : ''}`}
+                onClick={() => handleModeChange('whiteboard')}
+              >
+                <span className="menu-icon">🎨</span>
+                Whiteboard
+              </button>
+              <button 
+                className={`menu-item ${currentMode === 'study' ? 'active' : ''}`}
+                onClick={() => handleModeChange('study')}
+              >
+                <span className="menu-icon">📚</span>
+                Study and Revise
+              </button>
+            </div>
+            <div className="menu-divider" />
+            <div className="menu-section">
+              <button className="menu-item" onClick={handleSettings}>
+                <span className="menu-icon">⚙️</span>
+                Settings
+              </button>
+              <button className="menu-item logout" onClick={handleLogout}>
+                <span className="menu-icon">🚪</span>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Settings Modal */}
+      {settingsOpen && (
+        <>
+          <div className="modal-overlay" onClick={() => setSettingsOpen(false)} />
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Settings</h2>
+              <button className="modal-close" onClick={() => setSettingsOpen(false)}>×</button>
+            </div>
+            <div className="modal-content">
+              <div className="settings-section">
+                <h3>Account</h3>
+                <div className="setting-item">
+                  <label>Email</label>
+                  <div className="setting-value">{user?.email}</div>
+                </div>
+              </div>
+              <div className="settings-section">
+                <h3>Preferences</h3>
+                <p className="settings-note">More settings coming soon...</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Main Content */}
+      {renderModeContent()}
     </div>
   )
 }
