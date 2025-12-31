@@ -13,6 +13,18 @@ export interface Theme {
     accentHover: string
     accentLight: string
   }
+  font: {
+    family: string
+    size: string
+    lineHeight: string
+  }
+}
+
+// Shared font configuration for all themes
+const defaultFont = {
+  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  size: '16px',
+  lineHeight: '1.6',
 }
 
 export const themes: Record<string, Theme> = {
@@ -28,6 +40,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#7c3aed',
       accentLight: '#e6d9f5',
     },
+    font: defaultFont,
   },
   frappe: {
     name: 'Frappé',
@@ -41,6 +54,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#b584d9',
       accentLight: '#4a4059',
     },
+    font: defaultFont,
   },
   macchiato: {
     name: 'Macchiato',
@@ -54,6 +68,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#b38de6',
       accentLight: '#463854',
     },
+    font: defaultFont,
   },
   mocha: {
     name: 'Mocha',
@@ -67,6 +82,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#b794e6',
       accentLight: '#3e3650',
     },
+    font: defaultFont,
   },
   rosewater: {
     name: 'Rosewater',
@@ -80,6 +96,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#e6cfca',
       accentLight: '#4a3f3d',
     },
+    font: defaultFont,
   },
   teal: {
     name: 'Teal',
@@ -93,6 +110,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#80d5c4',
       accentLight: '#2d4a45',
     },
+    font: defaultFont,
   },
 }
 
@@ -100,6 +118,7 @@ export const applyTheme = (themeName: string) => {
   const theme = themes[themeName] || themes.mocha
   const root = document.documentElement
 
+  // Apply colors
   root.style.setProperty('--bg-primary', theme.colors.base)
   root.style.setProperty('--bg-secondary', theme.colors.surface)
   root.style.setProperty('--bg-hover', theme.colors.overlay)
@@ -110,6 +129,11 @@ export const applyTheme = (themeName: string) => {
   root.style.setProperty('--accent-color', theme.colors.accent)
   root.style.setProperty('--accent-hover', theme.colors.accentHover)
   root.style.setProperty('--accent-light', theme.colors.accentLight)
+  
+  // Apply font properties
+  root.style.setProperty('--font-family', theme.font.family)
+  root.style.setProperty('--font-size', theme.font.size)
+  root.style.setProperty('--line-height', theme.font.lineHeight)
 }
 
 export const getThemeNames = (): string[] => Object.keys(themes)

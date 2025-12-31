@@ -3,6 +3,18 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
 import { Dashboard } from './Dashboard'
 import { themes, applyTheme, getThemeNames } from './themes'
+import { 
+  EditIcon, 
+  TrashIcon, 
+  BookIcon, 
+  FlashcardsIcon, 
+  WhiteboardIcon, 
+  StudyIcon, 
+  SettingsIcon, 
+  LogoutIcon,
+  PencilIcon,
+  DashboardIcon
+} from './icons'
 import './App.css'
 
 interface Note {
@@ -192,7 +204,7 @@ function App() {
           <h1>Drafty</h1>
           <p>Your thoughts, organized</p>
           <button className="new-note-btn primary" onClick={createNewNote}>
-            ✏️ New Note
+            <EditIcon size={16} /> New Note
           </button>
         </div>
         <div className="notes-list">
@@ -270,7 +282,9 @@ function App() {
           </>
         ) : (
           <div className="empty-state">
-            <div className="empty-state-icon">📝</div>
+            <div className="empty-state-icon">
+              <PencilIcon size={64} />
+            </div>
             <h2>No Note Selected</h2>
             <p>Create a new note or select one from the sidebar</p>
           </div>
@@ -283,7 +297,8 @@ function App() {
     <div className="mode-container">
       <div className="mode-content">
         <div className="mode-header">
-          <h2>🎴 Flashcards Mode</h2>
+          <FlashcardsIcon size={48} />
+          <h2>Flashcards Mode</h2>
           <p>Create and study with flashcards</p>
         </div>
         <div className="mode-body">
@@ -297,7 +312,8 @@ function App() {
     <div className="mode-container">
       <div className="mode-content">
         <div className="mode-header">
-          <h2>🎨 Whiteboard Mode</h2>
+          <WhiteboardIcon size={48} />
+          <h2>Whiteboard Mode</h2>
           <p>Freeform canvas like Apple Freeform</p>
         </div>
         <div className="mode-body">
@@ -311,7 +327,8 @@ function App() {
     <div className="mode-container">
       <div className="mode-content">
         <div className="mode-header">
-          <h2>📚 Study and Revise</h2>
+          <StudyIcon size={48} />
+          <h2>Study and Revise</h2>
           <p>Review and test your knowledge</p>
         </div>
         <div className="mode-body">
@@ -350,35 +367,35 @@ function App() {
                 className={`menu-item ${currentMode === 'dashboard' ? 'active' : ''}`}
                 onClick={() => handleModeChange('dashboard')}
               >
-                <span className="menu-icon">📊</span>
+                <span className="menu-icon"><DashboardIcon size={20} /></span>
                 Dashboard
               </button>
               <button 
                 className={`menu-item ${currentMode === 'notebook' ? 'active' : ''}`}
                 onClick={() => handleModeChange('notebook')}
               >
-                <span className="menu-icon">📓</span>
+                <span className="menu-icon"><BookIcon size={20} /></span>
                 Notebook
               </button>
               <button 
                 className={`menu-item ${currentMode === 'flashcards' ? 'active' : ''}`}
                 onClick={() => handleModeChange('flashcards')}
               >
-                <span className="menu-icon">🎴</span>
+                <span className="menu-icon"><FlashcardsIcon size={20} /></span>
                 Flashcards
               </button>
               <button 
                 className={`menu-item ${currentMode === 'whiteboard' ? 'active' : ''}`}
                 onClick={() => handleModeChange('whiteboard')}
               >
-                <span className="menu-icon">🎨</span>
+                <span className="menu-icon"><WhiteboardIcon size={20} /></span>
                 Whiteboard
               </button>
               <button 
                 className={`menu-item ${currentMode === 'study' ? 'active' : ''}`}
                 onClick={() => handleModeChange('study')}
               >
-                <span className="menu-icon">📚</span>
+                <span className="menu-icon"><StudyIcon size={20} /></span>
                 Study and Revise
               </button>
             </div>
@@ -393,7 +410,7 @@ function App() {
                       setMenuOpen(false)
                     }}
                   >
-                    <span className="menu-icon">🗑️</span>
+                    <span className="menu-icon"><TrashIcon size={20} /></span>
                     Delete Note
                   </button>
                 </div>
@@ -402,11 +419,11 @@ function App() {
             <div className="menu-divider" />
             <div className="menu-section">
               <button className="menu-item" onClick={handleSettings}>
-                <span className="menu-icon">⚙️</span>
+                <span className="menu-icon"><SettingsIcon size={20} /></span>
                 Settings
               </button>
               <button className="menu-item logout" onClick={handleLogout}>
-                <span className="menu-icon">🚪</span>
+                <span className="menu-icon"><LogoutIcon size={20} /></span>
                 Log Out
               </button>
             </div>
