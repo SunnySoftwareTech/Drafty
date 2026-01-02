@@ -114,19 +114,29 @@ export const themes: Record<string, Theme> = {
   },
 }
 
-export const applyTheme = (themeName: string) => {
+export const applyTheme = (themeName: string, mode: 'dark' | 'light' = 'dark', accentOverride: string | null = null) => {
   const theme = themes[themeName] || themes.mocha
   const root = document.documentElement
 
+  // Determine base palettes for light/dark
+  const isLight = mode === 'light'
+  const base = isLight ? invertColor(theme.colors.base, '#ffffff') : theme.colors.base
+  const surface = isLight ? invertColor(theme.colors.surface, '#ffffff') : theme.colors.surface
+  const overlay = isLight ? invertColor(theme.colors.overlay, '#f6f6f6') : theme.colors.overlay
+  const text = isLight ? '#111' : theme.colors.text
+  const subtext = isLight ? '#444' : theme.colors.subtext
+
+  const accent = accentOverride || theme.colors.accent
+
   // Apply colors
-  root.style.setProperty('--bg-primary', theme.colors.base)
-  root.style.setProperty('--bg-secondary', theme.colors.surface)
-  root.style.setProperty('--bg-hover', theme.colors.overlay)
-  root.style.setProperty('--text-primary', theme.colors.text)
-  root.style.setProperty('--text-secondary', theme.colors.subtext)
-  root.style.setProperty('--text-tertiary', theme.colors.subtext)
-  root.style.setProperty('--border-color', theme.colors.overlay)
-  root.style.setProperty('--accent-color', theme.colors.accent)
+  root.style.setProperty('--bg-primary', base)
+  root.style.setProperty('--bg-secondary', surface)
+  root.style.setProperty('--bg-hover', overlay)
+  root.style.setProperty('--text-primary', text)
+  root.style.setProperty('--text-secondary', subtext)
+  root.style.setProperty('--text-tertiary', subtext)
+  root.style.setProperty('--border-color', overlay)
+  root.style.setProperty('--accent-color', accent)
   root.style.setProperty('--accent-hover', theme.colors.accentHover)
   root.style.setProperty('--accent-light', theme.colors.accentLight)
   
@@ -134,6 +144,26 @@ export const applyTheme = (themeName: string) => {
   root.style.setProperty('--font-family', theme.font.family)
   root.style.setProperty('--font-size', theme.font.size)
   root.style.setProperty('--line-height', theme.font.lineHeight)
+}
+
+// Very small helper to blend/invert a color for a basic light mode conversion
+function invertColor(hex: string, fallback: string) {
+  try {
+    // strip #
+    const h = hex.replace('#', '')
+    if (h.length !== 6) return fallback
+    const r = parseInt(h.substring(0,2), 16)
+    const g = parseInt(h.substring(2,4), 16)
+    const b = parseInt(h.substring(4,6), 16)
+    // simple luminance check; return lightened version
+    const factor = 1.35
+    const nr = Math.min(255, Math.floor(r * factor))
+    const ng = Math.min(255, Math.floor(g * factor))
+    const nb = Math.min(255, Math.floor(b * factor))
+    return `#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}`
+  } catch (e) {
+    return fallback
+  }
 }
 
 export const getThemeNames = (): string[] => Object.keys(themes)

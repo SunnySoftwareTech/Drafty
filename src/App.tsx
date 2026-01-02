@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from './useAuth'
 import { Dashboard } from './Dashboard'
 import { themes, applyTheme, getThemeNames } from './themes'
@@ -23,9 +23,10 @@ interface Note {
   content: string
   createdAt: string
   updatedAt: string
+  format?: string
 }
 
-type Mode = 'dashboard' | 'notebook' | 'flashcards' | 'whiteboard' | 'study'
+type Mode = 'dashboard' | 'notebook' | 'flashcards' | 'whiteboard' | 'study' | 'settings'
 
 const DEFAULT_TEXT_COLOR = '#cdd6f4'
 const DEFAULT_FONT_SIZE = '16'
@@ -38,8 +39,11 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState('mocha')
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark')
+  const [accentColor, setAccentColor] = useState<string | null>(null)
   const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR)
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
+  const [flashcards, setFlashcards] = useState<any[]>([])
 
   // Load notes from localStorage when user changes
   useEffect(() => {
@@ -70,7 +74,11 @@ function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('drafty-theme') || 'mocha'
     setCurrentTheme(savedTheme)
-    applyTheme(savedTheme)
+    const savedMode = (localStorage.getItem('drafty-theme-mode') as 'dark' | 'light') || 'dark'
+    const savedAccent = localStorage.getItem('drafty-accent') || null
+    setThemeMode(savedMode)
+    setAccentColor(savedAccent)
+    applyTheme(savedTheme, savedMode, savedAccent)
     
     // Load text formatting preferences
     const savedTextColor = localStorage.getItem('drafty-text-color') || DEFAULT_TEXT_COLOR
@@ -81,8 +89,20 @@ function App() {
 
   const handleThemeChange = (theme: string) => {
     setCurrentTheme(theme)
-    applyTheme(theme)
+    applyTheme(theme, themeMode, accentColor)
     localStorage.setItem('drafty-theme', theme)
+  }
+
+  const handleThemeModeChange = (mode: 'dark' | 'light') => {
+    setThemeMode(mode)
+    applyTheme(currentTheme, mode, accentColor)
+    localStorage.setItem('drafty-theme-mode', mode)
+  }
+
+  const handleAccentChange = (color: string) => {
+    setAccentColor(color)
+    applyTheme(currentTheme, themeMode, color)
+    localStorage.setItem('drafty-accent', color)
   }
 
   const handleTextColorChange = (color: string) => {
@@ -107,6 +127,7 @@ function App() {
       id: Date.now().toString(),
       title: 'Untitled Note',
       content: '',
+      format: 'normal',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -157,13 +178,17 @@ function App() {
   }
 
   const handleModeChange = (mode: Mode) => {
+    // Auto-create a journal note when entering notebook if none exists
+    if (mode === 'notebook' && !selectedNoteId) {
+      createNewNote()
+    }
     setCurrentMode(mode)
     setMenuOpen(false)
   }
 
   const handleSettings = () => {
-    setSettingsOpen(true)
-    setMenuOpen(false)
+    // Open settings as its own page
+    handleModeChange('settings')
   }
 
   const handleLogout = async () => {
@@ -298,11 +323,11 @@ function App() {
       <div className="mode-content">
         <div className="mode-header">
           <FlashcardsIcon size={48} />
-          <h2>Flashcards Mode</h2>
+          <h2>Flashcards</h2>
           <p>Create and study with flashcards</p>
         </div>
         <div className="mode-body">
-          <p>Coming soon: Interactive flashcards for effective learning</p>
+          <FlashcardsManager flashcards={flashcards} setFlashcards={setFlashcards} user={user} />
         </div>
       </div>
     </div>
@@ -313,11 +338,11 @@ function App() {
       <div className="mode-content">
         <div className="mode-header">
           <WhiteboardIcon size={48} />
-          <h2>Whiteboard Mode</h2>
-          <p>Freeform canvas like Apple Freeform</p>
+          <h2>Whiteboard</h2>
+          <p>Draw and save sketches</p>
         </div>
         <div className="mode-body">
-          <p>Coming soon: Draw, sketch, and brainstorm on an infinite canvas</p>
+          <Whiteboard user={user} />
         </div>
       </div>
     </div>
@@ -328,11 +353,11 @@ function App() {
       <div className="mode-content">
         <div className="mode-header">
           <StudyIcon size={48} />
-          <h2>Study and Revise</h2>
-          <p>Review and test your knowledge</p>
+          <h2>Study & Revise</h2>
+          <p>Review your flashcards and revise effectively</p>
         </div>
         <div className="mode-body">
-          <p>Coming soon: Spaced repetition and active recall tools</p>
+          <StudyManager flashcards={flashcards} />
         </div>
       </div>
     </div>
@@ -431,52 +456,152 @@ function App() {
         </>
       )}
 
-      {/* Settings Modal */}
-      {settingsOpen && (
-        <>
-          <div className="modal-overlay" onClick={() => setSettingsOpen(false)} />
-          <div className="modal">
-            <div className="modal-header">
-              <h2>Settings</h2>
-              <button className="modal-close" onClick={() => setSettingsOpen(false)}>×</button>
-            </div>
-            <div className="modal-content">
-              <div className="settings-section">
-                <h3>Account</h3>
-                <div className="setting-item">
-                  <label>Email</label>
-                  <div className="setting-value">{user?.email}</div>
-                </div>
-              </div>
-              <div className="settings-section">
-                <h3>Theme</h3>
-                <p className="settings-description">Choose from 6 Catppuccin color themes</p>
-                <div className="theme-grid">
-                  {getThemeNames().map((themeName) => (
-                    <button
-                      key={themeName}
-                      className={`theme-option ${currentTheme === themeName ? 'active' : ''}`}
-                      onClick={() => handleThemeChange(themeName)}
-                      style={{
-                        backgroundColor: themes[themeName].colors.base,
-                        color: themes[themeName].colors.text,
-                        borderColor: currentTheme === themeName ? themes[themeName].colors.accent : 'transparent'
-                      }}
-                    >
-                      {themes[themeName].name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Main Content */}
-      {renderModeContent()}
+      {/* Settings handled as its own mode (page) */}
+      {currentMode === 'settings' ? renderSettings() : renderModeContent()}
     </div>
   )
 }
 
 export default App
+
+// --- Small inline components for flashcards, whiteboard, and study ---
+import React, { useRef, useState, useEffect } from 'react'
+
+function FlashcardsManager({ flashcards, setFlashcards, user }: any) {
+  useEffect(() => {
+    if (!user) return
+    const saved = localStorage.getItem(`drafty-flashcards-${user.uid}`)
+    if (saved) setFlashcards(JSON.parse(saved))
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    localStorage.setItem(`drafty-flashcards-${user.uid}`, JSON.stringify(flashcards))
+  }, [flashcards, user])
+
+  const [front, setFront] = useState('')
+  const [back, setBack] = useState('')
+
+  const addCard = () => {
+    if (!front && !back) return
+    setFlashcards([{ id: Date.now().toString(), front, back, known: false }, ...flashcards])
+    setFront('')
+    setBack('')
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12 }}>
+        <input placeholder="Front" value={front} onChange={(e) => setFront(e.target.value)} />
+        <input placeholder="Back" value={back} onChange={(e) => setBack(e.target.value)} />
+        <button onClick={addCard}>Add</button>
+      </div>
+      <div>
+        {flashcards.map((c: any) => (
+          <div key={c.id} style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+            <strong>{c.front}</strong>
+            <div style={{ color: '#666' }}>{c.back}</div>
+          </div>
+        ))}
+      </div>
+      <StudyManager flashcards={flashcards} />
+    </div>
+  )
+}
+
+function StudyManager({ flashcards }: any) {
+  const [index, setIndex] = useState(0)
+  const [showBack, setShowBack] = useState(false)
+
+  if (!flashcards || flashcards.length === 0) return <div>No flashcards yet.</div>
+
+  const card = flashcards[index % flashcards.length]
+
+  return (
+    <div>
+      <div style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 8 }}>
+        <h3>{card.front}</h3>
+        {showBack && <p>{card.back}</p>}
+        <div style={{ marginTop: 8 }}>
+          <button onClick={() => setShowBack(!showBack)}>{showBack ? 'Hide' : 'Show'} Answer</button>
+          <button onClick={() => { setIndex(index + 1); setShowBack(false) }}>Next</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Whiteboard({ user }: any) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [drawing, setDrawing] = useState(false)
+  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.width = canvas.clientWidth * devicePixelRatio
+    canvas.height = canvas.clientHeight * devicePixelRatio
+    const context = canvas.getContext('2d')
+    if (!context) return
+    context.scale(devicePixelRatio, devicePixelRatio)
+    context.lineCap = 'round'
+    context.strokeStyle = '#000'
+    context.lineWidth = 2
+    setCtx(context)
+
+    // Load saved
+    if (user) {
+      const saved = localStorage.getItem(`drafty-whiteboard-${user.uid}`)
+      if (saved) {
+        const img = new Image()
+        img.onload = () => context.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight)
+        img.src = saved
+      }
+    }
+  }, [user])
+
+  const start = (e: any) => {
+    setDrawing(true)
+    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
+    ctx?.beginPath()
+    ctx?.moveTo(e.clientX - rect.left, e.clientY - rect.top)
+  }
+
+  const move = (e: any) => {
+    if (!drawing) return
+    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
+    ctx?.lineTo(e.clientX - rect.left, e.clientY - rect.top)
+    ctx?.stroke()
+  }
+
+  const end = () => {
+    setDrawing(false)
+    ctx?.closePath()
+  }
+
+  const clear = () => {
+    const canvas = canvasRef.current
+    if (!canvas || !ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (user) localStorage.removeItem(`drafty-whiteboard-${user.uid}`)
+  }
+
+  const save = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const data = canvas.toDataURL()
+    if (user) localStorage.setItem(`drafty-whiteboard-${user.uid}`, data)
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 8 }}>
+        <button onClick={save}>Save</button>
+        <button onClick={clear}>Clear</button>
+      </div>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: 8 }}>
+        <canvas ref={canvasRef} style={{ width: '100%', height: 400 }} onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end} />
+      </div>
+    </div>
+  )
+}
