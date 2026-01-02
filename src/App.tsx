@@ -37,7 +37,6 @@ function App() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [currentMode, setCurrentMode] = useState<Mode>('dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState('mocha')
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark')
   const [accentColor, setAccentColor] = useState<string | null>(null)
@@ -363,6 +362,60 @@ function App() {
     </div>
   )
 
+  const renderSettings = () => (
+    <div className="mode-container">
+      <div className="mode-content settings-page">
+        <div className="mode-header">
+          <SettingsIcon size={48} />
+          <h2>Settings</h2>
+          <p>Account and appearance</p>
+        </div>
+        <div className="mode-body">
+          <div className="settings-section">
+            <h3>Account</h3>
+            <div className="setting-item">
+              <label>Email</label>
+              <div className="setting-value">{user?.email}</div>
+            </div>
+          </div>
+          <div className="settings-section">
+            <h3>Theme</h3>
+            <p className="settings-description">Choose from Catppuccin color themes</p>
+            <div className="theme-grid">
+              {getThemeNames().map((themeName) => (
+                <button
+                  key={themeName}
+                  className={`theme-option ${currentTheme === themeName ? 'active' : ''}`}
+                  onClick={() => handleThemeChange(themeName)}
+                  style={{
+                    backgroundColor: themes[themeName].colors.base,
+                    color: themes[themeName].colors.text,
+                    borderColor: currentTheme === themeName ? themes[themeName].colors.accent : 'transparent'
+                  }}
+                >
+                  {themes[themeName].name}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: 8 }}>Mode</label>
+              <select value={themeMode} onChange={(e) => handleThemeModeChange(e.target.value as 'dark'|'light')}>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: 8 }}>Accent color</label>
+              <input type="color" value={accentColor || '#cba6f7'} onChange={(e) => handleAccentChange(e.target.value)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="app">
       {/* Burger Menu */}
@@ -465,7 +518,6 @@ function App() {
 export default App
 
 // --- Small inline components for flashcards, whiteboard, and study ---
-import React, { useRef, useState, useEffect } from 'react'
 
 function FlashcardsManager({ flashcards, setFlashcards, user }: any) {
   useEffect(() => {
