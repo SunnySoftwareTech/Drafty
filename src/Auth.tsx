@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useAuth } from './useAuth'
 import './Auth.css'
 
@@ -11,7 +12,7 @@ export function Auth() {
 
   const { signup, login, loginWithGoogle } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -84,7 +85,7 @@ export function Auth() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
               disabled={loading}
@@ -97,7 +98,7 @@ export function Auth() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
               disabled={loading}
