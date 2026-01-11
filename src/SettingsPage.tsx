@@ -1,4 +1,3 @@
-/// <reference path="./react-shim.d.ts" />
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useAuth } from './useAuth'

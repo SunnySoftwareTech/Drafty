@@ -6,11 +6,15 @@ declare module 'react' {
   export type ReactNode = any
   export type ChangeEvent<T = any> = any
   export type MouseEvent<T = any> = any
+  export type FormEvent<T = any> = any
 
   export function useState<T = any>(initial?: T): [T, (v: T) => void]
   export function useEffect(cb: (...args: any[]) => any, deps?: any[]): void
   export function useMemo<T>(cb: () => T, deps?: any[]): T
   export function useRef<T = any>(initial?: T): { current: T }
+  export function useContext<T = any>(context: any): T
+  export function createContext<T = any>(value?: T): any
+  export const StrictMode: any
 
   export const Fragment: any
   export function createElement(...args: any[]): any
@@ -37,5 +41,3 @@ declare global {
     interface ElementChildrenAttribute { children: any }
   }
 }
-
-export {}
