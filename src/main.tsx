@@ -60,19 +60,18 @@ export function RootApp() {
     )
   }
 
-  if (currentView === 'homepage') {
-    return <Homepage />
-  }
+  const viewNode =
+    currentView === 'homepage' ? (
+      <Homepage />
+    ) : currentView === 'auth' ? (
+      <Auth />
+    ) : currentView === 'settings' ? (
+      <SettingsPage />
+    ) : (
+      <App />
+    )
 
-  if (currentView === 'auth') {
-    return <Auth />
-  }
-
-  if (currentView === 'settings') {
-    return <SettingsPage />
-  }
-
-  return <App />
+  return <div className="app-view" key={currentView}>{viewNode}</div>
 }
 
 createRoot(document.getElementById('root')!).render(

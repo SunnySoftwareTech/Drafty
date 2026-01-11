@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import type * as React from 'react'
 import { EditIcon, PencilIcon } from '../icons'
 import type { Book, Page } from '../models'
 import { COLOR_PRESETS, DEFAULT_FONT_FAMILY, hexToRgb, rgbToHex } from '../utils/color'
@@ -57,6 +58,7 @@ export function NotebookPage({
 
   const selectedBook = books.find((b) => b.id === selectedBookId) || null
   const selectedPage = selectedBook?.pages.find((p) => p.id === selectedPageId) || null
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -68,6 +70,37 @@ export function NotebookPage({
     if (diffDays === 1) return 'Yesterday'
     if (diffDays < 7) return `${diffDays} days ago`
     return date.toLocaleDateString()
+  }
+
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const renderFormattedPreview = (text: string) => {
+    // replace [font=name]...[/font] with styled spans
+    const html = text.replace(/\[font=(.+?)\]([\s\S]*?)\[\/font\]/g, (_m, fname, inner) => {
+      return `<span style="font-family:${fname};">${escapeHtml(inner)}</span>`
+    })
+    return html.replace(/\n/g, '<br/>')
+  }
+
+  const applyFontToSelection = (font: string) => {
+    if (!selectedBook || !selectedPage) return
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    if (start == null || end == null || start === end) {
+      // no selection -> treat as global change
+      setFontFamily(font)
+      setTimeout(() => setFontFamily(font), 0)
+      return
+    }
+    const current = selectedPage.content || ''
+    const before = current.slice(0, start)
+    const selected = current.slice(start, end)
+    const after = current.slice(end)
+    const wrapped = `${before}[font=${font}]${selected}[/font]${after}`
+    updatePage(selectedBook.id, selectedPage.id, { content: wrapped })
   }
 
   return (
@@ -119,17 +152,65 @@ export function NotebookPage({
         </div>
 
         <div className="notes-list">
-          {selectedBook?.pages.map((page) => (
-            <div
-              key={page.id}
-              className={`note-item ${selectedPageId === page.id ? 'active' : ''}`}
-              onClick={() => setSelectedPageId(page.id)}
-            >
-              <div className="note-item-title">{page.name || 'Untitled Page'}</div>
-              <div className="note-item-preview">{page.content.substring(0, 60) || 'No content'}</div>
-              <div className="note-item-date">{formatDate(page.updatedAt)}</div>
-            </div>
-          ))}
+          {selectedBook?.pages
+            .slice()
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((page, idx) => (
+              <div
+                key={page.id}
+                className={`note-item ${selectedPageId === page.id ? 'active' : ''}`}
+                onClick={() => setSelectedPageId(page.id)}
+              >
+                <div className="note-item-header">
+                  <span className="page-number">{idx + 1}</span>
+                  <div className="note-item-title">{page.name || 'Untitled Page'}</div>
+                  <div className="page-reorder-buttons">
+                    <button
+                      type="button"
+                      className="reorder-btn"
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.stopPropagation()
+                        if (!selectedBook) return
+                        const sortedPages = selectedBook.pages.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                        const currentIdx = sortedPages.findIndex((p) => p.id === page.id)
+                        if (currentIdx > 0) {
+                          const prevPage = sortedPages[currentIdx - 1]
+                          const tempOrder = page.order ?? 0
+                          updatePage(selectedBook.id, page.id, { order: prevPage.order ?? 0 })
+                          updatePage(selectedBook.id, prevPage.id, { order: tempOrder })
+                        }
+                      }}
+                      disabled={idx === 0}
+                      title="Move up"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="reorder-btn"
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.stopPropagation()
+                        if (!selectedBook) return
+                        const sortedPages = selectedBook.pages.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                        const currentIdx = sortedPages.findIndex((p) => p.id === page.id)
+                        if (currentIdx < sortedPages.length - 1) {
+                          const nextPage = sortedPages[currentIdx + 1]
+                          const tempOrder = page.order ?? 0
+                          updatePage(selectedBook.id, page.id, { order: nextPage.order ?? 0 })
+                          updatePage(selectedBook.id, nextPage.id, { order: tempOrder })
+                        }
+                      }}
+                      disabled={idx === (selectedBook?.pages.length ?? 0) - 1}
+                      title="Move down"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </div>
+                <div className="note-item-preview">{page.content.substring(0, 60) || 'No content'}</div>
+                <div className="note-item-date">{formatDate(page.updatedAt)}</div>
+              </div>
+            ))}
         </div>
       </aside>
 
@@ -186,7 +267,11 @@ export function NotebookPage({
                     Font
                     <select
                       value={fontFamily}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) => setFontFamily(e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                        const val = e.target.value
+                        // if user has text selected, apply font to selection
+                        applyFontToSelection(val)
+                      }}
                       className="font-size-select"
                     >
                       <option value={DEFAULT_FONT_FAMILY}>System</option>
@@ -255,22 +340,36 @@ export function NotebookPage({
                 onChange={(e: ChangeEvent<HTMLInputElement>) => updateBook(selectedBook.id, { name: e.target.value })}
                 placeholder="Book name..."
               />
-              <input
-                type="text"
-                className="page-title-input"
-                value={selectedPage.name}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => updatePage(selectedBook.id, selectedPage.id, { name: e.target.value })}
-                placeholder="Page name..."
-              />
+              <div className="page-header">
+                <span className="page-number-display">
+                  Page {(selectedBook.pages.findIndex((p) => p.id === selectedPage.id) ?? -1) + 1} of {selectedBook.pages.length}
+                </span>
+                <input
+                  type="text"
+                  className="page-title-input"
+                  value={selectedPage.name}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => updatePage(selectedBook.id, selectedPage.id, { name: e.target.value })}
+                  placeholder="Page name..."
+                />
+              </div>
               <textarea
                 className="note-content-textarea"
                 value={selectedPage.content}
+                ref={textareaRef}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                   updatePage(selectedBook.id, selectedPage.id, { content: e.target.value })
                 }
                 placeholder="Start writing on this page..."
                 style={{ color: textColor, fontSize: `${fontSize}px`, fontFamily }}
               />
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Preview (formatted)</div>
+                <div
+                  className="note-preview-formatted"
+                  style={{ padding: 12, border: '1px solid var(--border-color)', borderRadius: 8, background: 'var(--bg-secondary)' }}
+                  dangerouslySetInnerHTML={{ __html: renderFormattedPreview(selectedPage.content) }}
+                />
+              </div>
             </div>
           </>
         ) : (

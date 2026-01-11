@@ -114,7 +114,12 @@ export const themes: Record<string, Theme> = {
   },
 }
 
-export const applyTheme = (themeName: string, mode: 'dark' | 'light' = 'dark', accentOverride: string | null = null) => {
+export const applyTheme = (
+  themeName: string,
+  mode: 'dark' | 'light' = 'dark',
+  accentOverride: string | null = null,
+  blackAndWhite: boolean = false,
+) => {
   const theme = themes[themeName] || themes.mocha
   const root = document.documentElement
 
@@ -129,9 +134,16 @@ export const applyTheme = (themeName: string, mode: 'dark' | 'light' = 'dark', a
   const subtext = isLight ? '#444' : theme.colors.subtext
 
   const accentRaw = accentOverride || theme.colors.accent
-  const accent = isLight ? ensureReadableAccentOnLight(accentRaw) : accentRaw
-  const accentHover = isLight ? darken(accent, 0.12) : theme.colors.accentHover
-  const accentLight = isLight ? tintTowards(accent, '#ffffff', 0.86) : theme.colors.accentLight
+  let accent = isLight ? ensureReadableAccentOnLight(accentRaw) : accentRaw
+  let accentHover = isLight ? darken(accent, 0.12) : theme.colors.accentHover
+  let accentLight = isLight ? tintTowards(accent, '#ffffff', 0.86) : theme.colors.accentLight
+
+  if (blackAndWhite) {
+    // Force grayscale accents and readable text for B/W mode
+    accent = isLight ? '#000000' : '#ffffff'
+    accentHover = isLight ? '#222222' : '#cccccc'
+    accentLight = isLight ? '#f6f6f6' : '#111111'
+  }
 
   // Apply colors
   root.style.setProperty('--bg-primary', base)

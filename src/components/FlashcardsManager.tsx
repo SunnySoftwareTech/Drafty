@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { ChangeEvent } from 'react'
-import type { Book, Flashcard } from '../models'
+import type { Flashcard } from '../models'
 import { StudyManager } from './StudyManager'
 
 export function FlashcardsManager({
   flashcards,
   setFlashcards,
   user,
-  books,
 }: {
   flashcards: Flashcard[]
   setFlashcards: (v: Flashcard[]) => void
   user: { uid: string } | null
-  books: Book[]
 }) {
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
-  const [selectedBookId, setSelectedBookId] = useState<string | 'all'>('all')
-
-  useEffect(() => {
-    if (selectedBookId !== 'all') {
-      const exists = books.some((b) => b.id === selectedBookId)
-      if (!exists) setSelectedBookId('all')
-    }
-  }, [books, selectedBookId])
-
-  const filtered = selectedBookId === 'all' ? flashcards : flashcards.filter((c) => c.bookId === selectedBookId)
 
   const addCard = () => {
     if (!user) return
@@ -35,7 +23,6 @@ export function FlashcardsManager({
       id: Date.now().toString(),
       front,
       back,
-      bookId: selectedBookId === 'all' ? null : selectedBookId,
       createdAt: now,
       updatedAt: now,
     }
@@ -50,21 +37,7 @@ export function FlashcardsManager({
 
   return (
     <div>
-      <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          Notebook
-          <select
-            value={selectedBookId}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedBookId(e.target.value as 'all' | string)}
-          >
-            <option value="all">All</option>
-            {books.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <input
           placeholder="Question"
           value={front}
@@ -83,10 +56,10 @@ export function FlashcardsManager({
       </div>
 
       <div>
-        {filtered.length === 0 ? (
+        {flashcards.length === 0 ? (
           <div style={{ color: 'var(--text-tertiary)' }}>No flashcards yet.</div>
         ) : (
-          filtered.map((c) => (
+          flashcards.map((c) => (
             <div
               key={c.id}
               style={{
@@ -110,7 +83,7 @@ export function FlashcardsManager({
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <StudyManager flashcards={filtered} />
+        <StudyManager flashcards={flashcards} />
       </div>
     </div>
   )

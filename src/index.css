@@ -49,6 +49,69 @@ body {
   overflow: auto;
 }
 
+/* Simple view transition for page changes */
+.app-view > * {
+  animation: viewFadeIn 220ms ease both;
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glassmorphism: subtle translucent surfaces */
+.glass-surface {
+  backdrop-filter: blur(6px) saturate(1.05);
+  -webkit-backdrop-filter: blur(6px) saturate(1.05);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+[data-theme-mode="light"] .glass-surface {
+  background-color: rgba(255,255,255,0.72);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 6px 22px rgba(16,16,16,0.06);
+}
+
+[data-theme-mode="dark"] .glass-surface {
+  background-color: rgba(20,20,28,0.56);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+}
+
+/* Apply to common containers */
+.dropdown-menu,
+.modal,
+.settingspage-card,
+.file-card,
+.note-item,
+.projects-book-row,
+.menu-header,
+.sidebar,
+.editor-container {
+  /* preserve existing shape by layering the glass surface */
+  background-clip: padding-box;
+}
+
+.dropdown-menu,
+.modal,
+.settingspage-card,
+.file-card,
+.note-item,
+.projects-book-row,
+.menu-header {
+  /* add glass surface class properties */
+  backdrop-filter: blur(6px) saturate(1.03);
+  -webkit-backdrop-filter: blur(6px) saturate(1.03);
+}
+
 button {
   border-radius: 6px;
   border: 1px solid var(--border-color);

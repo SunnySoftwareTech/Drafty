@@ -1,15 +1,13 @@
-import type { Book, Flashcard } from '../models'
+import type { Flashcard } from '../models'
 import { FlashcardsIcon } from '../icons'
 import { FlashcardsManager } from '../components/FlashcardsManager'
 
 export function FlashcardsPage({
   user,
-  books,
   flashcards,
   setFlashcards,
 }: {
   user: { uid: string } | null
-  books: Book[]
   flashcards: Flashcard[]
   setFlashcards: (v: Flashcard[]) => void
 }) {
@@ -19,10 +17,10 @@ export function FlashcardsPage({
         <div className="mode-header">
           <FlashcardsIcon size={48} />
           <h2>Flashcards</h2>
-          <p>Create and study with flashcards</p>
+          <p>Create and study with interactive flashcards</p>
         </div>
         <div className="mode-body">
-          <FlashcardsManager flashcards={flashcards} setFlashcards={setFlashcards} user={user} books={books} />
+          <FlashcardsManager flashcards={flashcards} setFlashcards={setFlashcards} user={user} />
         </div>
       </div>
     </div>

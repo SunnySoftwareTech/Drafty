@@ -81,6 +81,7 @@ function App() {
             id: `${n.id}-p1`,
             name: 'Page 1',
             content: n.content || '',
+            order: 1,
             createdAt: n.createdAt || now,
             updatedAt: n.updatedAt || now,
           }
@@ -161,6 +162,7 @@ function App() {
       id: `${bookId}-p1`,
       name: 'Page 1',
       content: '',
+      order: 1,
       createdAt: now,
       updatedAt: now,
     }
@@ -190,11 +192,8 @@ function App() {
     const newBooks = books.filter((b) => b.id !== bookId)
     setBooks(newBooks)
 
-    // remove from projects
-    setProjects(projects.map((p) => ({ ...p, bookIds: p.bookIds.filter((id) => id !== bookId) })))
-
-    // remove related flashcards
-    setFlashcards(flashcards.filter((c) => c.bookId !== bookId))
+    // remove from projects (any items referencing this book)
+    setProjects(projects.map((p) => ({ ...p, items: p.items.filter((it) => !(it.kind === 'book' && it.id === bookId)) })))
 
     if (selectedBookId === bookId) {
       const next = newBooks.length > 0 ? newBooks[Math.min(idx, newBooks.length - 1)] : null
@@ -206,16 +205,20 @@ function App() {
   const createNewPage = (bookId: string) => {
     const now = new Date().toISOString()
     const pageId = `${bookId}-p${Date.now().toString()}`
+    
+    const book = books.find((b) => b.id === bookId)
+    if (!book) return
+    
+    const nextOrder = Math.max(0, ...book.pages.map(p => p.order ?? 0)) + 1
     const newPage: Page = {
       id: pageId,
       name: 'Untitled Page',
       content: '',
+      order: nextOrder,
       createdAt: now,
       updatedAt: now,
     }
 
-    const book = books.find((b) => b.id === bookId)
-    if (!book) return
     updateBook(bookId, { pages: [newPage, ...book.pages] })
     setSelectedPageId(pageId)
   }
@@ -286,6 +289,7 @@ function App() {
               setSelectedPageId(book && book.pages.length > 0 ? book.pages[0].id : null)
               handleModeChange('notebook')
             }}
+            flashcards={flashcards}
           />
         )
       case 'notebook':
@@ -311,7 +315,7 @@ function App() {
           />
         )
       case 'flashcards':
-        return <FlashcardsPage user={user ? { uid: user.uid } : null} books={books} flashcards={flashcards} setFlashcards={setFlashcards} />
+        return <FlashcardsPage user={user ? { uid: user.uid } : null} flashcards={flashcards} setFlashcards={setFlashcards} />
       case 'whiteboard':
         return <WhiteboardPage user={user ? { uid: user.uid } : null} />
       case 'study':

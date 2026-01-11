@@ -1,3 +1,4 @@
+/// <reference path="./react-shim.d.ts" />
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useAuth } from './useAuth'
@@ -48,6 +49,7 @@ export function SettingsPage() {
   const [currentTheme, setCurrentTheme] = useState('mocha')
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark')
   const [accentColor, setAccentColor] = useState<string | null>(null)
+  const [blackAndWhite, setBlackAndWhite] = useState(false)
 
   const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR)
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
@@ -69,10 +71,12 @@ export function SettingsPage() {
     const savedTheme = localStorage.getItem('drafty-theme') || 'mocha'
     const savedMode = (localStorage.getItem('drafty-theme-mode') as 'dark' | 'light') || 'dark'
     const savedAccent = localStorage.getItem('drafty-accent') || null
+    const savedBW = localStorage.getItem('drafty-bw-mode') === '1'
     setCurrentTheme(savedTheme)
     setThemeMode(savedMode)
     setAccentColor(savedAccent)
-    applyTheme(savedTheme, savedMode, savedAccent)
+    setBlackAndWhite(savedBW)
+    applyTheme(savedTheme, savedMode, savedAccent, savedBW)
 
     const savedTextColor = localStorage.getItem('drafty-text-color') || DEFAULT_TEXT_COLOR
     const savedFontSize = localStorage.getItem('drafty-font-size') || DEFAULT_FONT_SIZE
@@ -96,8 +100,14 @@ export function SettingsPage() {
 
   const handleAccentChange = (color: string) => {
     setAccentColor(color)
-    applyTheme(currentTheme, themeMode, color)
+    applyTheme(currentTheme, themeMode, color, blackAndWhite)
     localStorage.setItem('drafty-accent', color)
+  }
+
+  const handleBWChange = (on: boolean) => {
+    setBlackAndWhite(on)
+    applyTheme(currentTheme, themeMode, accentColor, on)
+    localStorage.setItem('drafty-bw-mode', on ? '1' : '0')
   }
 
   const handleTextColorChange = (color: string) => {
@@ -242,6 +252,10 @@ export function SettingsPage() {
                 value={accentColor || '#cba6f7'}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => handleAccentChange(e.target.value)}
               />
+            </label>
+            <label>
+              Black & White
+              <input type="checkbox" checked={blackAndWhite} onChange={(e: ChangeEvent<HTMLInputElement>) => handleBWChange(e.target.checked)} />
             </label>
           </div>
         </div>
