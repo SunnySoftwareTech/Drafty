@@ -10,7 +10,7 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1000;
+  z-index: 2000; /* raised so it's above overlays */
   width: 44px;
   height: 44px;
   padding: 0;
@@ -36,7 +36,7 @@
 .burger-line {
   width: 20px;
   height: 2px;
-  background-color: var(--text-primary);
+  background-color: var(--accent-color); /* use accent so hamburger is visible in both themes */
   border-radius: 2px;
   transition: all 0.2s ease;
 }
@@ -489,7 +489,12 @@
 
 .mode-header svg {
   color: var(--accent-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  width: 64px;
+  height: 64px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .mode-header h2 {
