@@ -13,10 +13,12 @@
   
   /* Font properties */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ui-font-family: var(--font-family);
+  --editor-font-family: var(--font-family);
   --font-size: 16px;
   --line-height: 1.6;
   
-  font-family: var(--font-family);
+  font-family: var(--ui-font-family);
   line-height: var(--line-height);
   font-weight: 400;
 
@@ -39,7 +41,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: var(--font-family);
+  font-family: var(--ui-font-family);
   font-size: var(--font-size);
   line-height: var(--line-height);
 }
@@ -98,9 +100,7 @@ body {
 .editor-container {
   /* preserve existing shape by layering the glass surface */
   background-clip: padding-box;
-}
-
-.dropdown-menu,
+  font-family: var(--editor-font-family);
 .modal,
 .settingspage-card,
 .file-card,

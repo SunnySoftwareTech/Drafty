@@ -1,5 +1,5 @@
 import { EditIcon, PencilIcon } from '../icons'
-import type { Book, Project } from '../models'
+import type { Book, Project, Flashcard } from '../models'
 import type { ChangeEvent } from 'react'
 import { useMemo, useState } from 'react'
 
@@ -11,6 +11,7 @@ export function ProjectsPage({
   setSelectedProjectId,
   openNotebook,
   flashcards,
+  flashcardFolders,
 }: {
   books: Book[]
   projects: Project[]
@@ -18,10 +19,11 @@ export function ProjectsPage({
   selectedProjectId: string | null
   setSelectedProjectId: (id: string | null) => void
   openNotebook: (bookId: string) => void
-  flashcards: { id: string; front: string }[]
+  flashcards: Flashcard[]
+  flashcardFolders: import('../models').FlashcardFolder[]
 }) {
   // legacy state removed: use `itemToAddId` and `kindToAdd`
-  const [kindToAdd, setKindToAdd] = useState<'book' | 'flashcard' | 'whiteboard'>('book')
+  const [kindToAdd, setKindToAdd] = useState<'book' | 'flashcard'>('book')
   const [itemToAddId, setItemToAddId] = useState<string>('')
   const [addingOpen, setAddingOpen] = useState(false)
 
@@ -52,7 +54,7 @@ export function ProjectsPage({
       <aside className="sidebar">
         <div className="sidebar-header">
           <h1>Projects</h1>
-          <p>Group files (notebooks, flashcards, whiteboard) for studying</p>
+          <p>Group files (notebooks and flashcards) for studying</p>
           <button
             className="new-note-btn primary"
             onClick={() => {
@@ -112,7 +114,7 @@ export function ProjectsPage({
                     <select value={kindToAdd} onChange={(e: ChangeEvent<HTMLSelectElement>) => setKindToAdd(e.target.value as any)}>
                       <option value="book">Notebook</option>
                       <option value="flashcard">Flashcard</option>
-                      <option value="whiteboard">Whiteboard</option>
+
                     </select>
                   </label>
 
@@ -129,14 +131,10 @@ export function ProjectsPage({
                       <select value={itemToAddId} onChange={(e: ChangeEvent<HTMLSelectElement>) => setItemToAddId(e.target.value)}>
                         <option value="">Select a flashcard…</option>
                         {flashcards.map((f) => (
-                          <option key={f.id} value={f.id}>{f.front || f.id}</option>
+                          <option key={f.id} value={f.id}>{f.front || f.id}{f.folderId ? ` (Folder: ${flashcardFolders.find(x => x.id === f.folderId)?.name ?? 'Unknown'})` : ''}</option>
                         ))}
                       </select>
-                    ) : (
-                      <select value={itemToAddId} onChange={(e: ChangeEvent<HTMLSelectElement>) => setItemToAddId(e.target.value)}>
-                        <option value="">Select a whiteboard (not implemented)</option>
-                      </select>
-                    )}
+                    ) : null}
                   </label>
 
                   <button

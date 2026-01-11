@@ -4,7 +4,7 @@ import { useAuth } from './useAuth'
 import { Dashboard } from './Dashboard'
 import { applyTheme } from './themes'
 import { TrashIcon, BookIcon, FlashcardsIcon, WhiteboardIcon, StudyIcon, SettingsIcon, LogoutIcon, DashboardIcon } from './icons'
-import type { Book, Flashcard, Page, Project } from './models'
+import type { Book, Flashcard, Page, Project, FlashcardFolder } from './models'
 import { DEFAULT_FONT_FAMILY } from './utils/color'
 import { FlashcardsPage } from './pages/FlashcardsPage'
 import { NotebookPage } from './pages/NotebookPage'
@@ -38,8 +38,9 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR)
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
-  const [fontFamily, setFontFamily] = useState(DEFAULT_FONT_FAMILY)
+  const [editorFontFamily, setEditorFontFamily] = useState(DEFAULT_FONT_FAMILY)
   const [flashcards, setFlashcards] = useState<Flashcard[]>([])
+  const [flashcardFolders, setFlashcardFolders] = useState<FlashcardFolder[]>([])
 
   // Load documents from localStorage when user changes (and migrate legacy notes -> books)
   useEffect(() => {
@@ -57,6 +58,7 @@ function App() {
     const legacyNotesKey = `drafty-notes-${user.uid}`
     const projectsKey = `drafty-projects-${user.uid}`
     const flashcardsKey = `drafty-flashcards-${user.uid}`
+    const foldersKey = `drafty-flashcard-folders-${user.uid}`
 
     const loadJson = <T,>(key: string, fallback: T): T => {
       const raw = localStorage.getItem(key)
@@ -99,6 +101,7 @@ function App() {
 
     const loadedProjects = loadJson<Project[]>(projectsKey, [])
     const loadedFlashcards = loadJson<Flashcard[]>(flashcardsKey, [])
+    const loadedFolders = loadJson<FlashcardFolder[]>(foldersKey, [])
 
     setBooks(loadedBooks)
     setSelectedBookId(loadedBooks.length > 0 ? loadedBooks[0].id : null)
@@ -106,11 +109,12 @@ function App() {
     setProjects(loadedProjects)
     setSelectedProjectId(loadedProjects.length > 0 ? loadedProjects[0].id : null)
     setFlashcards(loadedFlashcards)
+    setFlashcardFolders(loadedFolders)
   }, [user])
 
   // Load and apply theme
   useEffect(() => {
-    const savedTheme = localStorage.getItem('drafty-theme') || 'mocha'
+    const savedTheme = localStorage.getItem('drafty-theme') || 'macchiato'
     const savedMode = (localStorage.getItem('drafty-theme-mode') as 'dark' | 'light') || 'dark'
     const savedAccent = localStorage.getItem('drafty-accent') || null
     applyTheme(savedTheme, savedMode, savedAccent)
@@ -118,10 +122,14 @@ function App() {
     // Load text formatting preferences
     const savedTextColor = localStorage.getItem('drafty-text-color') || DEFAULT_TEXT_COLOR
     const savedFontSize = localStorage.getItem('drafty-font-size') || DEFAULT_FONT_SIZE
-    const savedFontFamily = localStorage.getItem('drafty-font-family') || DEFAULT_FONT_FAMILY
+    const savedUiFont = localStorage.getItem('drafty-ui-font-family') || DEFAULT_FONT_FAMILY
+    const savedEditorFont = localStorage.getItem('drafty-editor-font-family') || DEFAULT_FONT_FAMILY
     setTextColor(savedTextColor)
     setFontSize(savedFontSize)
-    setFontFamily(savedFontFamily)
+    setEditorFontFamily(savedEditorFont)
+    // apply css vars
+    document.documentElement.style.setProperty('--ui-font-family', savedUiFont)
+    document.documentElement.style.setProperty('--editor-font-family', savedEditorFont)
   }, [])
 
   const handleTextColorChange = (color: string) => {
@@ -134,9 +142,10 @@ function App() {
     localStorage.setItem('drafty-font-size', size)
   }
 
-  const handleFontFamilyChange = (family: string) => {
-    setFontFamily(family)
-    localStorage.setItem('drafty-font-family', family)
+  const handleEditorFontFamilyChange = (family: string) => {
+    setEditorFontFamily(family)
+    localStorage.setItem('drafty-editor-font-family', family)
+    document.documentElement.style.setProperty('--editor-font-family', family)
   }
 
   // Save documents to localStorage whenever they change (user-specific)
@@ -154,6 +163,11 @@ function App() {
     if (!user) return
     localStorage.setItem(`drafty-flashcards-${user.uid}`, JSON.stringify(flashcards))
   }, [flashcards, user])
+
+  useEffect(() => {
+    if (!user) return
+    localStorage.setItem(`drafty-flashcard-folders-${user.uid}`, JSON.stringify(flashcardFolders))
+  }, [flashcardFolders, user])
 
   const createNewBook = () => {
     const now = new Date().toISOString()
@@ -290,6 +304,7 @@ function App() {
               handleModeChange('notebook')
             }}
             flashcards={flashcards}
+            flashcardFolders={flashcardFolders}
           />
         )
       case 'notebook':
@@ -310,12 +325,12 @@ function App() {
             setTextColor={handleTextColorChange}
             fontSize={fontSize}
             setFontSize={handleFontSizeChange}
-            fontFamily={fontFamily}
-            setFontFamily={handleFontFamilyChange}
+            editorFontFamily={editorFontFamily}
+            setEditorFontFamily={handleEditorFontFamilyChange}
           />
         )
       case 'flashcards':
-        return <FlashcardsPage user={user ? { uid: user.uid } : null} flashcards={flashcards} setFlashcards={setFlashcards} />
+        return <FlashcardsPage user={user ? { uid: user.uid } : null} flashcards={flashcards} setFlashcards={setFlashcards} folders={flashcardFolders} setFolders={setFlashcardFolders} />
       case 'whiteboard':
         return <WhiteboardPage user={user ? { uid: user.uid } : null} />
       case 'study':

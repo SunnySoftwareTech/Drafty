@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useAuth } from './useAuth'
 import { themes, applyTheme, getThemeNames } from './themes'
-import { SettingsIcon, LogoutIcon, DashboardIcon } from './icons'
+import { SettingsIcon, LogoutIcon } from './icons'
 import './SettingsPage.css'
 
 const DEFAULT_TEXT_COLOR = '#cdd6f4'
@@ -52,7 +52,8 @@ export function SettingsPage() {
 
   const [textColor, setTextColor] = useState(DEFAULT_TEXT_COLOR)
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
-  const [fontFamily, setFontFamily] = useState(DEFAULT_FONT_FAMILY)
+  const [uiFontFamily, setUiFontFamily] = useState(DEFAULT_FONT_FAMILY)
+  const [editorFontFamily, setEditorFontFamily] = useState(DEFAULT_FONT_FAMILY)
 
   const storageKeys = useMemo(() => {
     const uid = user?.uid
@@ -79,10 +80,12 @@ export function SettingsPage() {
 
     const savedTextColor = localStorage.getItem('drafty-text-color') || DEFAULT_TEXT_COLOR
     const savedFontSize = localStorage.getItem('drafty-font-size') || DEFAULT_FONT_SIZE
-    const savedFontFamily = localStorage.getItem('drafty-font-family') || DEFAULT_FONT_FAMILY
+    const savedUiFont = localStorage.getItem('drafty-ui-font-family') || DEFAULT_FONT_FAMILY
+    const savedEditorFont = localStorage.getItem('drafty-editor-font-family') || DEFAULT_FONT_FAMILY
     setTextColor(savedTextColor)
     setFontSize(savedFontSize)
-    setFontFamily(savedFontFamily)
+    setUiFontFamily(savedUiFont)
+    setEditorFontFamily(savedEditorFont)
   }, [])
 
   const handleThemeChange = (theme: string) => {
@@ -119,9 +122,16 @@ export function SettingsPage() {
     localStorage.setItem('drafty-font-size', size)
   }
 
-  const handleFontFamilyChange = (family: string) => {
-    setFontFamily(family)
-    localStorage.setItem('drafty-font-family', family)
+  const handleUiFontChange = (family: string) => {
+    setUiFontFamily(family)
+    localStorage.setItem('drafty-ui-font-family', family)
+    document.documentElement.style.setProperty('--ui-font-family', family)
+  }
+
+  const handleEditorFontChange = (family: string) => {
+    setEditorFontFamily(family)
+    localStorage.setItem('drafty-editor-font-family', family)
+    document.documentElement.style.setProperty('--editor-font-family', family)
   }
 
   const exportData = (kind: DataKind) => {
@@ -158,9 +168,6 @@ export function SettingsPage() {
     }
   }
 
-  const goBack = () => {
-    window.location.hash = '#app'
-  }
 
   const handleLogout = async () => {
     try {
@@ -195,9 +202,6 @@ export function SettingsPage() {
             </div>
           </div>
           <div className="settingspage-actions">
-            <button onClick={goBack}>
-              <DashboardIcon size={18} /> Back
-            </button>
             <button className="logout" onClick={handleLogout}>
               <LogoutIcon size={18} /> Log Out
             </button>
@@ -280,8 +284,17 @@ export function SettingsPage() {
             </label>
 
             <label>
-              Font preset
-              <select value={fontFamily} onChange={(e: ChangeEvent<HTMLSelectElement>) => handleFontFamilyChange(e.target.value)}>
+              UI Font
+              <select value={uiFontFamily} onChange={(e: ChangeEvent<HTMLSelectElement>) => handleUiFontChange(e.target.value)}>
+                <option value={DEFAULT_FONT_FAMILY}>System</option>
+                <option value={'Georgia, "Times New Roman", serif'}>Serif</option>
+                <option value={'"Trebuchet MS", "Segoe UI", sans-serif'}>Rounded</option>
+              </select>
+            </label>
+
+            <label>
+              Editor Font
+              <select value={editorFontFamily} onChange={(e: ChangeEvent<HTMLSelectElement>) => handleEditorFontChange(e.target.value)}>
                 <option value={DEFAULT_FONT_FAMILY}>System</option>
                 <option value={'Georgia, "Times New Roman", serif'}>Serif</option>
                 <option value={'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}>Mono</option>

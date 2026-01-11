@@ -21,8 +21,8 @@ export function NotebookPage({
   setTextColor,
   fontSize,
   setFontSize,
-  fontFamily,
-  setFontFamily,
+  editorFontFamily,
+  setEditorFontFamily,
 }: {
   userEmail: string | null
   books: Book[]
@@ -39,8 +39,8 @@ export function NotebookPage({
   setTextColor: (color: string) => void
   fontSize: string
   setFontSize: (size: string) => void
-  fontFamily: string
-  setFontFamily: (family: string) => void
+  editorFontFamily: string
+  setEditorFontFamily: (family: string) => void
 }) {
   const [mixerOpen, setMixerOpen] = useState(false)
   const [mixerR, setMixerR] = useState(205)
@@ -91,8 +91,8 @@ export function NotebookPage({
     const end = textarea.selectionEnd
     if (start == null || end == null || start === end) {
       // no selection -> treat as global change
-      setFontFamily(font)
-      setTimeout(() => setFontFamily(font), 0)
+      setEditorFontFamily(font)
+      setTimeout(() => setEditorFontFamily(font), 0)
       return
     }
     const current = selectedPage.content || ''
@@ -251,7 +251,7 @@ export function NotebookPage({
                     Font Size
                     <select
                       value={fontSize}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) => setFontSize(e.target.value)}
+                                      onChange={(e: ChangeEvent<HTMLSelectElement>) => setFontSize(e.target.value)}
                       className="font-size-select"
                     >
                       <option value="12">12px</option>
@@ -266,7 +266,7 @@ export function NotebookPage({
                   <label className="formatting-label">
                     Font
                     <select
-                      value={fontFamily}
+                      value={editorFontFamily}
                       onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                         const val = e.target.value
                         // if user has text selected, apply font to selection
@@ -360,7 +360,7 @@ export function NotebookPage({
                   updatePage(selectedBook.id, selectedPage.id, { content: e.target.value })
                 }
                 placeholder="Start writing on this page..."
-                style={{ color: textColor, fontSize: `${fontSize}px`, fontFamily }}
+                style={{ color: textColor, fontSize: `${fontSize}px`, fontFamily: editorFontFamily }}
               />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Preview (formatted)</div>

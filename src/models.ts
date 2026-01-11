@@ -18,8 +18,8 @@ export interface Book {
 export interface Project {
   id: string
   name: string
-  // items can reference any file type: 'book', 'flashcard', 'whiteboard', 'page'
-  items: { kind: 'book' | 'flashcard' | 'whiteboard' | 'page'; id: string }[]
+  // items can reference any file type: 'book', 'flashcard', 'page'
+  items: { kind: 'book' | 'flashcard' | 'page'; id: string }[]
   createdAt: string
   updatedAt: string
 }
@@ -28,6 +28,14 @@ export interface Flashcard {
   id: string
   front: string
   back: string
+  folderId?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FlashcardFolder {
+  id: string
+  name: string
   createdAt: string
   updatedAt: string
 }
