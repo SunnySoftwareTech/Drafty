@@ -108,14 +108,16 @@ body {
 .editor-container {
   /* preserve existing shape by layering the glass surface */
   background-clip: padding-box;
-  font-family: var(--editor-font-family);
+}
+
+/* add glass surface class properties */
+.dropdown-menu,
 .modal,
 .settingspage-card,
 .file-card,
 .note-item,
 .projects-book-row,
 .menu-header {
-  /* add glass surface class properties */
   backdrop-filter: blur(6px) saturate(1.03);
   -webkit-backdrop-filter: blur(6px) saturate(1.03);
 }

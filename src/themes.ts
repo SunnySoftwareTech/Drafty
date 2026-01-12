@@ -40,7 +40,7 @@ export const themes: Record<string, Theme> = {
       accentHover: '#7c3aed',
       accentLight: '#e6d9f5',
     },
-    font: { ...defaultFont, size: '17px' },
+    font: defaultFont,
   },
   frappe: {
     name: 'Frappé',
@@ -249,6 +249,6 @@ function invertColor(hex: string, fallback: string) {
   }
 }
 
-export const getThemeNames = (): string[] => ['macchiato', 'latte']
+export const getThemeNames = (): string[] => Object.keys(themes)
 
 export const getTheme = (themeName: string): Theme => themes[themeName] || themes.mocha
