@@ -5,6 +5,10 @@ export function Homepage() {
     window.location.hash = 'app'
   }
 
+  const handleLogin = () => {
+    window.location.hash = 'login'
+  }
+
   return (
     <div className="homepage">
       <header className="homepage-header">
@@ -12,6 +16,10 @@ export function Homepage() {
         <nav className="homepage-nav">
           <a href="#features">Features</a>
           <a href="#about">About</a>
+          <div className="auth-buttons">
+            <button className="login-button" onClick={handleLogin}>Log In</button>
+            <button className="signup-button" onClick={handleGetStarted}>Sign Up</button>
+          </div>
         </nav>
       </header>
 
@@ -120,7 +128,7 @@ export function Homepage() {
       </main>
 
       <footer className="homepage-footer">
-        <p>&copy; 2025 Drafty. Your thoughts, organized.</p>
+        <p>&copy; 2026 Drafty. Your thoughts, organized.</p>
       </footer>
     </div>
   )

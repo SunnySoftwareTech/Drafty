@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -13,7 +12,6 @@ export function RootApp() {
   const { user, loading } = useAuth()
   const [currentView, setCurrentView] = useState<'homepage' | 'auth' | 'app' | 'settings'>('homepage')
 
-  // Determine which view to show based on user state and hash
   useEffect(() => {
     const determineView = () => {
       const hash = window.location.hash
@@ -23,7 +21,7 @@ export function RootApp() {
         return 'app'
       }
       
-      if (hash === '#app') {
+      if (hash === '#app' || hash === '#login') {
         return 'auth'
       }
       

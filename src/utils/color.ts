@@ -1,4 +1,4 @@
-export const DEFAULT_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+export const DEFAULT_FONT_FAMILY = '"Trebuchet MS", "Segoe UI", Tahoma, Arial, sans-serif'
 
 export const COLOR_PRESETS = ['#cdd6f4', '#f38ba8', '#fab387', '#f9e2af', '#a6e3a1', '#89b4fa', '#cba6f7']
 

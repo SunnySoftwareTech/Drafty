@@ -34,13 +34,6 @@ export interface Flashcard {
   interval: number
 }
 
-export interface WhiteboardData {
-  id: string
-  elements: any[] // Drawing elements
-  createdAt: string
-  updatedAt: string
-}
-
 export interface UserPreferences {
   theme: string
   [key: string]: any
@@ -115,31 +108,6 @@ export const deleteFlashcard = async (userId: string, cardId: string) => {
   } catch (error) {
     console.error('Error deleting flashcard:', error)
     throw error
-  }
-}
-
-// Whiteboard API
-export const saveWhiteboard = async (userId: string, whiteboard: WhiteboardData) => {
-  try {
-    const boardRef = doc(db, 'users', userId, 'whiteboards', whiteboard.id)
-    await setDoc(boardRef, {
-      ...whiteboard,
-      updatedAt: Timestamp.now().toDate().toISOString(),
-    })
-  } catch (error) {
-    console.error('Error saving whiteboard:', error)
-    throw error
-  }
-}
-
-export const getWhiteboards = async (userId: string): Promise<WhiteboardData[]> => {
-  try {
-    const boardsRef = collection(db, 'users', userId, 'whiteboards')
-    const querySnapshot = await getDocs(boardsRef)
-    return querySnapshot.docs.map(doc => doc.data() as WhiteboardData)
-  } catch (error) {
-    console.error('Error getting whiteboards:', error)
-    return []
   }
 }
 

@@ -159,29 +159,42 @@ export function ProjectsPage({
                 {project.items.length === 0 ? (
                   <p className="projects-muted">Nothing added yet. Use “Add item” above.</p>
                 ) : (
-                  project.items.map((it) => (
-                    <div key={`${it.kind}-${it.id}`} className="projects-book-row">
-                      <span className="projects-book-name">{it.kind}: {it.id}</span>
-                      <div className="projects-book-actions">
-                        {it.kind === 'book' && (
-                          <button type="button" className="projects-open" onClick={() => openNotebook(it.id)}>
-                            Open
+                  project.items.map((it) => {
+                    let displayName = it.id
+                    if (it.kind === 'book') {
+                      const book = books.find((b) => b.id === it.id)
+                      displayName = book ? book.name : it.id
+                    } else if (it.kind === 'flashcard') {
+                      const flashcard = flashcards.find((f) => f.id === it.id)
+                      displayName = flashcard ? flashcard.front : it.id
+                    }
+                    
+                    return (
+                      <div key={`${it.kind}-${it.id}`} className="projects-book-row">
+                        <span className="projects-book-name">
+                          <strong>{it.kind === 'book' ? '📓' : '📇'}</strong> {displayName}
+                        </span>
+                        <div className="projects-book-actions">
+                          {it.kind === 'book' && (
+                            <button type="button" className="projects-open" onClick={() => openNotebook(it.id)}>
+                              Open
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="projects-remove"
+                            onClick={() => {
+                              const now = new Date().toISOString()
+                              const nextItems = project.items.filter((i) => !(i.kind === it.kind && i.id === it.id))
+                              setProjects(projects.map((p) => (p.id === project.id ? { ...p, items: nextItems, updatedAt: now } : p)))
+                            }}
+                          >
+                            Remove
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="projects-remove"
-                          onClick={() => {
-                            const now = new Date().toISOString()
-                            const nextItems = project.items.filter((i) => !(i.kind === it.kind && i.id === it.id))
-                            setProjects(projects.map((p) => (p.id === project.id ? { ...p, items: nextItems, updatedAt: now } : p)))
-                          }}
-                        >
-                          Remove
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
             </div>

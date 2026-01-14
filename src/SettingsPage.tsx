@@ -3,13 +3,15 @@ import type { ChangeEvent } from 'react'
 import { useAuth } from './useAuth'
 import { themes, applyTheme, getThemeNames } from './themes'
 import { SettingsIcon, LogoutIcon } from './icons'
+import { GistService } from './gistService'
+import type { GistData } from './gistService'
 import './SettingsPage.css'
 
 const DEFAULT_TEXT_COLOR = '#cdd6f4'
 const DEFAULT_FONT_SIZE = '16'
-const DEFAULT_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+const DEFAULT_FONT_FAMILY = '"Trebuchet MS", "Segoe UI", Tahoma, Arial, sans-serif'
 
-type DataKind = 'books' | 'projects' | 'flashcards' | 'whiteboard'
+type DataKind = 'books' | 'projects' | 'flashcards'
 
 function safeJsonParse(text: string): unknown {
   return JSON.parse(text) as unknown
@@ -55,13 +57,16 @@ export function SettingsPage() {
   const [uiFontFamily, setUiFontFamily] = useState(DEFAULT_FONT_FAMILY)
   const [editorFontFamily, setEditorFontFamily] = useState(DEFAULT_FONT_FAMILY)
 
+  const [gistToken, setGistToken] = useState('')
+  const [syncStatus, setSyncStatus] = useState('')
+  const [isSyncing, setIsSyncing] = useState(false)
+
   const storageKeys = useMemo(() => {
     const uid = user?.uid
     return {
       books: uid ? `drafty-books-${uid}` : null,
       projects: uid ? `drafty-projects-${uid}` : null,
       flashcards: uid ? `drafty-flashcards-${uid}` : null,
-      whiteboard: uid ? `drafty-whiteboard-${uid}` : null,
       legacyNotes: uid ? `drafty-notes-${uid}` : null,
     }
   }, [user?.uid])
@@ -86,7 +91,11 @@ export function SettingsPage() {
     setFontSize(savedFontSize)
     setUiFontFamily(savedUiFont)
     setEditorFontFamily(savedEditorFont)
-  }, [])
+
+    // Load Gist token
+    const savedToken = localStorage.getItem(`drafty-gist-token-${user?.uid}`) || ''
+    setGistToken(savedToken)
+  }, [user])
 
   const handleThemeChange = (theme: string) => {
     setCurrentTheme(theme)
@@ -135,15 +144,17 @@ export function SettingsPage() {
   }
 
   const exportData = (kind: DataKind) => {
-    if (!user) return
     const key = storageKeys[kind]
     if (!key) return
     const raw = localStorage.getItem(key)
     const parsed = raw ? tryParseJson(raw) : []
-    downloadJson(`drafty-${kind}-${user.uid}.json`, parsed)
+    downloadJson(`drafty-${kind}.json`, parsed)
   }
 
   const clearData = (kind: DataKind) => {
+    const confirmMsg = `Are you sure you want to delete ALL ${kind}? This action cannot be undone!`
+    if (!confirm(confirmMsg)) return
+    
     const key = storageKeys[kind]
     if (!key) return
     localStorage.removeItem(key)
@@ -151,8 +162,7 @@ export function SettingsPage() {
       // also clear legacy notes if user wants to fully reset
       localStorage.removeItem(storageKeys.legacyNotes)
     }
-    // quick feedback: bounce hash to refresh App state when returning
-    alert(`${kind} cleared.`)
+    alert(`${kind} cleared successfully. Refresh the page to see changes.`)
   }
 
   const importData = async (kind: DataKind, file: File) => {
@@ -165,6 +175,87 @@ export function SettingsPage() {
     } catch (e) {
       console.error(e)
       alert('Import failed: invalid JSON file.')
+    }
+  }
+
+  const handleSaveGistToken = async () => {
+    if (!gistToken.trim()) {
+      setSyncStatus('Please enter a token')
+      return
+    }
+
+    const isValid = await GistService.testToken(gistToken)
+    if (!isValid) {
+      setSyncStatus('Invalid token - please check your token')
+      return
+    }
+
+    localStorage.setItem(`drafty-gist-token-${user?.uid}`, gistToken)
+    setSyncStatus('Token saved successfully!')
+    setTimeout(() => setSyncStatus(''), 3000)
+  }
+
+  const handleSyncToGist = async () => {
+    if (!user || !gistToken.trim()) {
+      setSyncStatus('Please save a valid token first')
+      return
+    }
+
+    setIsSyncing(true)
+    setSyncStatus('Syncing to Gist...')
+
+    try {
+      const gistService = new GistService(gistToken)
+      
+      const data: GistData = {
+        books: JSON.parse(localStorage.getItem(storageKeys.books!) || '[]'),
+        projects: JSON.parse(localStorage.getItem(storageKeys.projects!) || '[]'),
+        flashcards: JSON.parse(localStorage.getItem(storageKeys.flashcards!) || '[]'),
+        flashcardFolders: JSON.parse(localStorage.getItem(`drafty-flashcard-folders-${user.uid}`) || '[]'),
+        lastSync: new Date().toISOString(),
+      }
+
+      await gistService.save(data)
+      setSyncStatus('Successfully synced to Gist!')
+      setTimeout(() => setSyncStatus(''), 3000)
+    } catch (error) {
+      console.error('Sync error:', error)
+      setSyncStatus(`Sync failed: ${error}`)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleLoadFromGist = async () => {
+    if (!user || !gistToken.trim()) {
+      setSyncStatus('Please save a valid token first')
+      return
+    }
+
+    setIsSyncing(true)
+    setSyncStatus('Loading from Gist...')
+
+    try {
+      const gistService = new GistService(gistToken)
+      const data = await gistService.load()
+
+      if (!data) {
+        setSyncStatus('No data found in Gist')
+        setIsSyncing(false)
+        return
+      }
+
+      localStorage.setItem(storageKeys.books!, JSON.stringify(data.books || []))
+      localStorage.setItem(storageKeys.projects!, JSON.stringify(data.projects || []))
+      localStorage.setItem(storageKeys.flashcards!, JSON.stringify(data.flashcards || []))
+      localStorage.setItem(`drafty-flashcard-folders-${user.uid}`, JSON.stringify(data.flashcardFolders || []))
+
+      setSyncStatus('Successfully loaded from Gist! Refresh the page to see changes.')
+    } catch (error) {
+      console.error('Load error:', error)
+      setSyncStatus(`Load failed: ${error}`)
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -214,6 +305,41 @@ export function SettingsPage() {
             <span className="label">Email</span>
             <span className="value">{user.email}</span>
           </div>
+        </div>
+
+        <div className="settingspage-section">
+          <h3>🔄 GitHub Gist Sync</h3>
+          <p className="settingspage-muted">
+            <strong>How to sync:</strong><br/>
+            1. <a href="https://github.com/settings/tokens/new?description=Drafty&scopes=gist" target="_blank" rel="noopener noreferrer">Create a GitHub token</a> with 'gist' scope<br/>
+            2. Paste your token (starts with ghp_) below<br/>
+            3. Click "Save Token" then use sync buttons to backup/restore your data
+          </p>
+          
+          <div className="settingspage-row">
+            <label style={{ width: '100%' }}>
+              <strong>GitHub Personal Access Token</strong>
+              <input
+                type="password"
+                value={gistToken}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setGistToken(e.target.value)}
+                placeholder="Paste your token here (ghp_xxxxxxxxxxxxx)"
+                style={{ width: '100%', marginTop: '8px', padding: '8px' }}
+              />
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+            <button onClick={handleSaveGistToken} disabled={isSyncing}>Save Token</button>
+            <button onClick={handleSyncToGist} disabled={isSyncing || !gistToken.trim()}>Sync to Gist</button>
+            <button onClick={handleLoadFromGist} disabled={isSyncing || !gistToken.trim()}>Load from Gist</button>
+          </div>
+
+          {syncStatus && (
+            <p style={{ marginTop: '12px', color: syncStatus.includes('failed') || syncStatus.includes('Invalid') ? '#f38ba8' : '#a6e3a1' }}>
+              {syncStatus}
+            </p>
+          )}
         </div>
 
         <div className="settingspage-section">
@@ -286,34 +412,34 @@ export function SettingsPage() {
             <label>
               UI Font
               <select value={uiFontFamily} onChange={(e: ChangeEvent<HTMLSelectElement>) => handleUiFontChange(e.target.value)}>
-                <option value={DEFAULT_FONT_FAMILY}>System</option>
+                <option value={DEFAULT_FONT_FAMILY}>Trebuchet MS</option>
                 <option value={'Georgia, "Times New Roman", serif'}>Serif</option>
-                <option value={'"Trebuchet MS", "Segoe UI", sans-serif'}>Rounded</option>
+                <option value={'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'}>System</option>
               </select>
             </label>
 
             <label>
               Editor Font
               <select value={editorFontFamily} onChange={(e: ChangeEvent<HTMLSelectElement>) => handleEditorFontChange(e.target.value)}>
-                <option value={DEFAULT_FONT_FAMILY}>System</option>
+                <option value={DEFAULT_FONT_FAMILY}>Trebuchet MS</option>
                 <option value={'Georgia, "Times New Roman", serif'}>Serif</option>
                 <option value={'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}>Mono</option>
-                <option value={'"Trebuchet MS", "Segoe UI", sans-serif'}>Rounded</option>
+                <option value={'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'}>System</option>
               </select>
             </label>
           </div>
         </div>
 
         <div className="settingspage-section">
-          <h3>Files</h3>
-          <p className="settingspage-muted">Manage and move your Drafty documents (import/export/clear).</p>
+          <h3>Data Management</h3>
+          <p className="settingspage-muted">Export, import, or clear your Drafty data. Use Gist sync above for backup before clearing!</p>
 
           <div className="files-grid">
-            {(['books', 'projects', 'flashcards', 'whiteboard'] as DataKind[]).map((kind) => (
+            {(['books', 'projects', 'flashcards'] as DataKind[]).map((kind) => (
               <div key={kind} className="file-card">
-                <div className="file-card-title">{kind}</div>
+                <div className="file-card-title">{kind.charAt(0).toUpperCase() + kind.slice(1)}</div>
                 <div className="file-card-actions">
-                  <button onClick={() => exportData(kind)}>Export</button>
+                  <button onClick={() => exportData(kind)}>Export JSON</button>
 
                   <label className="file-import">
                     Import
@@ -329,7 +455,7 @@ export function SettingsPage() {
                   </label>
 
                   <button className="danger" onClick={() => clearData(kind)}>
-                    Clear
+                    Delete All
                   </button>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DashboardIcon, NotebookIcon, FlashcardsIcon, WhiteboardIcon, StudyIcon, BookIcon } from './icons'
+import { DashboardIcon, NotebookIcon, FlashcardsIcon, BookIcon } from './icons'
 import './Dashboard.css'
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -66,18 +66,18 @@ export function Dashboard({ onModeSelect }: DashboardProps) {
 
   const modes = [
     {
-      id: 'projects',
-      name: 'Projects',
-      description: 'Group multiple notebooks for a class or goal',
-      icon: BookIcon,
-      color: '#89b4fa',
+      id: 'notes',
+      name: 'Notes',
+      description: 'Quick notes and ideas',
+      icon: NotebookIcon,
+      color: '#cba6f7',
     },
     {
       id: 'notebook',
       name: 'Notebook',
       description: 'Organize your notes with sections and chapters',
-      icon: NotebookIcon,
-      color: '#cba6f7',
+      icon: BookIcon,
+      color: '#89b4fa',
     },
     {
       id: 'flashcards',
@@ -87,17 +87,10 @@ export function Dashboard({ onModeSelect }: DashboardProps) {
       color: '#94e2d5',
     },
     {
-      id: 'whiteboard',
-      name: 'Whiteboard',
-      description: 'Draw and brainstorm on a freeform canvas',
-      icon: WhiteboardIcon,
-      color: '#f5e0dc',
-    },
-    {
-      id: 'study',
-      name: 'Study & Revise',
-      description: 'Test your knowledge with spaced repetition',
-      icon: StudyIcon,
+      id: 'projects',
+      name: 'Projects',
+      description: 'Group multiple notebooks for a class or goal',
+      icon: BookIcon,
       color: '#f9e2af',
     },
   ]

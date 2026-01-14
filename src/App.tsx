@@ -3,14 +3,12 @@ import { useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
 import { Dashboard } from './Dashboard'
 import { applyTheme } from './themes'
-import { TrashIcon, BookIcon, FlashcardsIcon, WhiteboardIcon, StudyIcon, SettingsIcon, LogoutIcon, DashboardIcon } from './icons'
+import { TrashIcon, BookIcon, FlashcardsIcon, SettingsIcon, LogoutIcon, DashboardIcon, NotebookIcon } from './icons'
 import type { Book, Flashcard, Page, Project, FlashcardFolder } from './models'
 import { DEFAULT_FONT_FAMILY } from './utils/color'
 import { FlashcardsPage } from './pages/FlashcardsPage'
 import { NotebookPage } from './pages/NotebookPage'
 import { ProjectsPage } from './pages/ProjectsPage'
-import { StudyPage } from './pages/StudyPage'
-import { WhiteboardPage } from './pages/WhiteboardPage'
 import './App.css'
 
 interface LegacyNote {
@@ -22,7 +20,7 @@ interface LegacyNote {
   format?: string
 }
 
-type Mode = 'dashboard' | 'projects' | 'notebook' | 'flashcards' | 'whiteboard' | 'study'
+type Mode = 'dashboard' | 'notes' | 'projects' | 'notebook' | 'flashcards'
 
 const DEFAULT_TEXT_COLOR = '#cdd6f4'
 const DEFAULT_FONT_SIZE = '16'
@@ -42,7 +40,7 @@ function App() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([])
   const [flashcardFolders, setFlashcardFolders] = useState<FlashcardFolder[]>([])
 
-  // Load documents from localStorage when user changes (and migrate legacy notes -> books)
+  // Load documents from localStorage on mount (and migrate legacy notes -> books)
   useEffect(() => {
     if (!user) {
       setBooks([])
@@ -148,7 +146,7 @@ function App() {
     document.documentElement.style.setProperty('--editor-font-family', family)
   }
 
-  // Save documents to localStorage whenever they change (user-specific)
+  // Save documents to localStorage whenever they change
   useEffect(() => {
     if (!user) return
     localStorage.setItem(`drafty-books-${user.uid}`, JSON.stringify(books))
@@ -281,7 +279,6 @@ function App() {
       await logout()
     } catch (error) {
       console.error('Logout error:', error)
-      // Still close menu even if logout fails
     }
   }
 
@@ -289,6 +286,28 @@ function App() {
     switch (currentMode) {
       case 'dashboard':
         return renderDashboard()
+      case 'notes':
+        return (
+          <NotebookPage
+            userEmail={user?.email ?? null}
+            books={books}
+            selectedBookId={selectedBookId}
+            setSelectedBookId={setSelectedBookId}
+            selectedPageId={selectedPageId}
+            setSelectedPageId={setSelectedPageId}
+            createNewBook={createNewBook}
+            createNewPage={createNewPage}
+            updateBook={updateBook}
+            updatePage={updatePage}
+            deletePage={deletePage}
+            textColor={textColor}
+            setTextColor={handleTextColorChange}
+            fontSize={fontSize}
+            setFontSize={handleFontSizeChange}
+            editorFontFamily={editorFontFamily}
+            setEditorFontFamily={handleEditorFontFamilyChange}
+          />
+        )
       case 'projects':
         return (
           <ProjectsPage
@@ -331,10 +350,6 @@ function App() {
         )
       case 'flashcards':
         return <FlashcardsPage user={user ? { uid: user.uid } : null} flashcards={flashcards} setFlashcards={setFlashcards} folders={flashcardFolders} setFolders={setFlashcardFolders} />
-      case 'whiteboard':
-        return <WhiteboardPage user={user ? { uid: user.uid } : null} />
-      case 'study':
-        return <StudyPage flashcards={flashcards} />
       default:
         return renderDashboard()
     }
@@ -378,11 +393,11 @@ function App() {
                 Dashboard
               </button>
               <button 
-                className={`menu-item ${currentMode === 'projects' ? 'active' : ''}`}
-                onClick={() => handleModeChange('projects')}
+                className={`menu-item ${currentMode === 'notes' ? 'active' : ''}`}
+                onClick={() => handleModeChange('notes')}
               >
-                <span className="menu-icon"><BookIcon size={20} /></span>
-                Projects
+                <span className="menu-icon"><NotebookIcon size={20} /></span>
+                Notes
               </button>
               <button 
                 className={`menu-item ${currentMode === 'notebook' ? 'active' : ''}`}
@@ -399,18 +414,11 @@ function App() {
                 Flashcards
               </button>
               <button 
-                className={`menu-item ${currentMode === 'whiteboard' ? 'active' : ''}`}
-                onClick={() => handleModeChange('whiteboard')}
+                className={`menu-item ${currentMode === 'projects' ? 'active' : ''}`}
+                onClick={() => handleModeChange('projects')}
               >
-                <span className="menu-icon"><WhiteboardIcon size={20} /></span>
-                Whiteboard
-              </button>
-              <button 
-                className={`menu-item ${currentMode === 'study' ? 'active' : ''}`}
-                onClick={() => handleModeChange('study')}
-              >
-                <span className="menu-icon"><StudyIcon size={20} /></span>
-                Study and Revise
+                <span className="menu-icon"><BookIcon size={20} /></span>
+                Projects
               </button>
             </div>
             {selectedBook && currentMode === 'notebook' && (

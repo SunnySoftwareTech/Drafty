@@ -24,6 +24,7 @@
 .homepage-nav {
   display: flex;
   gap: 2rem;
+  align-items: center;
 }
 
 .homepage-nav a {
@@ -35,6 +36,43 @@
 
 .homepage-nav a:hover {
   color: var(--accent-color);
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-left: 1rem;
+}
+
+.login-button,
+.signup-button {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: inherit;
+}
+
+.login-button {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.login-button:hover {
+  background: var(--bg-tertiary);
+}
+
+.signup-button {
+  background: var(--accent-color);
+  color: var(--bg-primary);
+}
+
+.signup-button:hover {
+  filter: brightness(1.1);
 }
 
 .homepage-main {
